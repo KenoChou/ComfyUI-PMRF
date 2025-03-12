@@ -14,6 +14,7 @@ import numpy as np
 from PIL import Image
 import os
 import folder_paths
+from liblib import get_shared_model_path  
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -29,8 +30,15 @@ def set_realesrgan():
     model = RRDBNet(
         num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=2,
     )
-    upscale_models_path = os.path.join(folder_paths.models_dir, "upscale_models")
-    realesrgan_path = os.path.join(upscale_models_path, "RealESRGAN_x2plus.pth")
+    #upscale_models_path = os.path.join(folder_paths.models_dir, "upscale_models")
+    #realesrgan_path = os.path.join(upscale_models_path, "RealESRGAN_x2plus.pth")
+    realesrgan_path = get_shared_model_path("upscale_models/RealESRGAN_x2plus.pth")  # 共享路径
+    
+    # 验证文件存在性
+    if not os.path.exists(realesrgan_path):
+        raise FileNotFoundError(f"RealESRGAN model not found at {realesrgan_path}")
+    
+    
     upsampler = RealESRGANer(
         scale=2,
         model_path=realesrgan_path,
@@ -42,7 +50,11 @@ def set_realesrgan():
     )
     return upsampler
 
-pmrf_path = os.path.join(folder_paths.models_dir, "pmrf")
+#pmrf_path = os.path.join(folder_paths.models_dir, "pmrf")
+
+pmrf_path = get_shared_model_path("pmrf") 
+if not os.path.exists(pmrf_path):
+    raise FileNotFoundError(f"PMRF model not found at {pmrf_path}")
 upsampler = set_realesrgan()
 pmrf = MMSERectifiedFlow.from_pretrained(pmrf_path).to(device=device)
 
@@ -147,7 +159,7 @@ def inference(
             save_ext="png",
             use_parse=True,
             device=device,
-            model_rootpath=None,
+            model_rootpath=get_shared_model_path("facexlib_models") ,
         )
 
         cropped_face, restored_faces, restored_img = enhance_face(

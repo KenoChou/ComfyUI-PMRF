@@ -9,29 +9,46 @@ import os
 import pathlib
 from packaging.version import Version
 import time
+from liblib import get_shared_model_path  # 新增共享路径工具
 
-pmrf_path = os.path.join(folder_paths.models_dir, "pmrf")
+#pmrf_path = os.path.join(folder_paths.models_dir, "pmrf")
+#pmrf_model_path = os.path.join(pmrf_path, "model.safetensors")
+#pmrf_model_json_path = os.path.join(pmrf_path, "config.json")
+
+pmrf_path = get_shared_model_path("pmrf")  # 共享存储路径
 pmrf_model_path = os.path.join(pmrf_path, "model.safetensors")
 pmrf_model_json_path = os.path.join(pmrf_path, "config.json")
+
+
+
 if not (os.path.exists(pmrf_model_path) and os.path.exists(pmrf_model_json_path)):
-    print("Downloading PMRF model from ohayonguy/PMRF_blind_face_image_restoration...")
-    if not os.path.exists(pmrf_path):
-        os.makedirs(pmrf_path)
-    huggingface_hub.snapshot_download(
-        repo_id="ohayonguy/PMRF_blind_face_image_restoration",
-        local_dir=pmrf_path,
-    )
-upscale_models_path = os.path.join(folder_paths.models_dir, "upscale_models")
+    raise FileNotFoundError(f"PMRF model files missing in shared storage: {pmrf_path}")
+##if not (os.path.exists(pmrf_model_path) and os.path.exists(pmrf_model_json_path)):
+   ## print("Downloading PMRF model from ohayonguy/PMRF_blind_face_image_restoration...")
+   ## if not os.path.exists(pmrf_path):
+     ##   os.makedirs(pmrf_path)
+   ## huggingface_hub.snapshot_download(
+      ##  repo_id="ohayonguy/PMRF_blind_face_image_restoration",
+    ##    local_dir=pmrf_path,
+  ##  )
+#upscale_models_path = os.path.join(folder_paths.models_dir, "upscale_models")
+upscale_models_path = get_shared_model_path("upscale_models")
+
 models = ["RealESRGAN_x2plus.pth", "RealESRGAN_x4plus.pth"]
 for model in models:
     realesrgan_path = os.path.join(upscale_models_path, model)
     if not os.path.exists(realesrgan_path):
-        print(f"Downloading {model} model from 2kpr/Real-ESRGAN...")
-        huggingface_hub.snapshot_download(
-            repo_id="2kpr/Real-ESRGAN",
-            allow_patterns=model,
-            local_dir=upscale_models_path,
-        )
+        raise FileNotFoundError(f"RealESRGAN model {model} missing in shared storage: {upscale_models_path}")
+     
+##for model in models:
+   ## realesrgan_path = os.path.join(upscale_models_path, model)
+ ##   if not os.path.exists(realesrgan_path):
+        ##print(f"Downloading {model} model from 2kpr/Real-ESRGAN...")
+       ## huggingface_hub.snapshot_download(
+    ##        repo_id="2kpr/Real-ESRGAN",
+      ##      allow_patterns=model,
+  ##          local_dir=upscale_models_path,
+##        )
 
 packages = [
     {"name": "realesrgan", "version": "0.2.5"},
@@ -41,18 +58,31 @@ packages = [
     {"name": "pytorch_lightning", "version": "2.4.0"},
     {"name": "timm", "version": "1.0.7"},    
 ]
-
+missing_packages = []
 for package in packages:
-    if importlib.util.find_spec(package["name"]):
+    try:
+        dist = importlib.metadata.distribution(package["name"])
+        if Version(dist.version) < Version(package["version"]):
+            missing_packages.append(f"{package['name']}>={package['version']}")
+    except importlib.metadata.PackageNotFoundError:
+        missing_packages.append(f"{package['name']}>={package['version']}")
+
+if missing_packages:
+    raise ImportError(
+        f"Missing required packages in shared environment: {', '.join(missing_packages)}\n"
+        "Please pre-install them in the shared Python environment."
+    )
+##for package in packages:
+  ##  if importlib.util.find_spec(package["name"]):
         #print(f'Found package {package["name"]}')
         #print(f'Version: {package["version"]}')
         #print(f'Version: {importlib.metadata.version(package["name"])}')
-        if Version(package["version"]) > Version(importlib.metadata.version(package["name"])):
-            print(f'Updating {package["name"]} for PMRF...')
-            subprocess.check_call([sys.executable, "-m", "pip", "install", f'{package["name"]}>={package["version"]}', "--upgrade"])
-    else:
-        print(f'Installing {package["name"]} for PMRF...')
-        subprocess.check_call([sys.executable, "-m", "pip", "install", f'{package["name"]}>={package["version"]}', "--upgrade"])
+    ##    if Version(package["version"]) > Version(importlib.metadata.version(package["name"])):
+      ##      print(f'Updating {package["name"]} for PMRF...')
+        ##    subprocess.check_call([sys.executable, "-m", "pip", "install", f'{package["name"]}>={package["version"]}', "--upgrade"])
+    ##else:
+      ##  print(f'Installing {package["name"]} for PMRF...')
+        ##subprocess.check_call([sys.executable, "-m", "pip", "install", f'{package["name"]}>={package["version"]}', "--upgrade"])
 
 if importlib.util.find_spec("basicsr"):
     path = pathlib.Path(importlib.util.find_spec("basicsr").origin).parent.joinpath("data/degradations.py")
@@ -69,7 +99,8 @@ if importlib.util.find_spec("basicsr"):
                 f.write(content)
 
 if not importlib.util.find_spec("natten"):
-    print(f'Installing natten for PMRF...')
+   # print(f'Installing natten for PMRF...')
+    shared_whl_dir = get_shared_model_path("natten_wheels")
     cuda_version = ""
     torch_version = ""
     print("Searching for CUDA and Torch versions for installing atten needed by PMRF...")
@@ -133,18 +164,31 @@ if not importlib.util.find_spec("natten"):
         print("************************************")
         time.sleep(4)
     elif os.name == "nt" and cuda_version != "cu124":
+        whl_name = f"natten-0.17.2.dev0-py{sys.version_info.major}{sys.version_info.minor}-none-win_amd64.whl"
+        whl_path = os.path.join(shared_whl_dir, whl_name)
+        if not os.path.exists(whl_path):
+            raise FileNotFoundError(f"NATTEN wheel {whl_name} missing in shared storage: {shared_whl_dir}")
+        
+        subprocess.check_call([sys.executable, "-m", "pip", "install", whl_path])
         print("************************************")
         print("Error: Can't install natten on windows if CUDA runtime version is not 12.4 unless you build natten yourself, see https://github.com/SHI-Labs/NATTEN/blob/main/docs/install.md#build-with-msvc")
         print("       PMRF will not work until natten is installed, see https://github.com/SHI-Labs/NATTEN for help in installing natten.")
         print("************************************")
         time.sleep(4)
     elif os.name == "nt" and torch_version != "torch240":
+        whl_name = f"natten-0.17.2.dev0-py{sys.version_info.major}{sys.version_info.minor}-none-win_amd64.whl"
+        whl_path = os.path.join(shared_whl_dir, whl_name)
+        if not os.path.exists(whl_path):
+            raise FileNotFoundError(f"NATTEN wheel {whl_name} missing in shared storage: {shared_whl_dir}")
+        
+        subprocess.check_call([sys.executable, "-m", "pip", "install", whl_path])
         print("************************************")
         print("Error: Can't install natten on windows if torch version is not 2.4 unless you build natten yourself, see https://github.com/SHI-Labs/NATTEN/blob/main/docs/install.md#build-with-msvc")
         print("       PMRF will not work until natten is installed, see https://github.com/SHI-Labs/NATTEN for help in installing natten.")
         print("************************************")
         time.sleep(4)
     elif os.name == "nt" and (sys.version_info[1] < 10 or sys.version_info[1] > 12):
+        whl_name = f"natten-0.17.2.dev0-py{sys.version_info.major}{sys.version_info.minor}-none-win_amd64.whl"
         print("************************************")
         print("Error: Can't install natten on windows if python version isn't 3.10, 3.11, or 3.12, unless you build natten yourself, see https://github.com/SHI-Labs/NATTEN/blob/main/docs/install.md#build-with-msvc")
         print("       PMRF will not work until natten is installed, see https://github.com/SHI-Labs/NATTEN for help in installing natten.")
@@ -169,4 +213,9 @@ if not importlib.util.find_spec("natten"):
             )
         subprocess.check_call([sys.executable, "-m", "pip", "install", f"{whl_path}"])
     else:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", f"natten==0.17.1+{torch_version}{cuda_version}", "-f", "https://shi-labs.com/natten/wheels/"])
+       subprocess.check_call([
+            sys.executable, "-m", "pip", "install",
+            f"natten==0.17.1+{torch_version}{cuda_version}",
+            "--find-links", get_shared_model_path("natten_wheels_index")
+        ])
+        #subprocess.check_call([sys.executable, "-m", "pip", "install", f"natten==0.17.1+{torch_version}{cuda_version}", "-f", "https://shi-labs.com/natten/wheels/"])
