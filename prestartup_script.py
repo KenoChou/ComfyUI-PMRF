@@ -13,17 +13,21 @@ from configs.config import get_juicefs_path
 from configs.node_fields import PUILD_EVA_CLIP_MAPPINGS
 from configs.node_fields import get_field_pre_values
   # 新增共享路径工具
-
+from configs.config import get_juicefs_endpoint
 #pmrf_path = os.path.join(folder_paths.models_dir, "pmrf")
 #pmrf_model_path = os.path.join(pmrf_path, "model.safetensors")
 #pmrf_model_json_path = os.path.join(pmrf_path, "config.json")
+def get_shared_model_path(model_name):
+    return os.path.join(get_juicefs_endpoint(), "models", model_name)
 
 pmrf_path = get_shared_model_path("pmrf")  # 共享存储路径
+
 pmrf_model_path = os.path.join(pmrf_path, "model.safetensors")
+print(pmrf_model_path)
 pmrf_model_json_path = os.path.join(pmrf_path, "config.json")
 
 def get_shared_model_path(model_name):
-    return os.path.join(get_juicefs_path(), "models", model_name)
+    return os.path.join(get_juicefs_endpoint(), "models", model_name)
 
 
 if not (os.path.exists(pmrf_model_path) and os.path.exists(pmrf_model_json_path)):
@@ -38,10 +42,12 @@ if not (os.path.exists(pmrf_model_path) and os.path.exists(pmrf_model_json_path)
   ##  )
 #upscale_models_path = os.path.join(folder_paths.models_dir, "upscale_models")
 upscale_models_path = get_shared_model_path("upscale_models")
-
+print(upscale_models_path)
 models = ["RealESRGAN_x2plus.pth", "RealESRGAN_x4plus.pth"]
 for model in models:
     realesrgan_path = os.path.join(upscale_models_path, model)
+    
+    print(realesrgan_path)
     if not os.path.exists(realesrgan_path):
         raise FileNotFoundError(f"RealESRGAN model {model} missing in shared storage: {upscale_models_path}")
      

@@ -13,7 +13,7 @@ from configs.node_fields import get_field_pre_values
 
 
 def get_shared_cache_path(filename):
-    shared_drive_path = get_juicefs_path()  # 获取共享存储路径
+    shared_drive_path = get_juicefs_path(filename)  # 获取共享存储路径
     return os.path.join(shared_drive_path, 'cache', filename)
 # @liblib adapter: 使用共享存储路径管理配置
 CONFIG_PATH = get_shared_cache_path("k_diffusion_config.pt")

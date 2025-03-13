@@ -17,16 +17,16 @@ import folder_paths
 from configs.config import get_juicefs_path
 from configs.node_fields import PUILD_EVA_CLIP_MAPPINGS
 from configs.node_fields import get_field_pre_values
-
+from configs.config import get_juicefs_endpoint
 
 
 def get_shared_model_path(model_name):
     """ 获取共享模型的路径 """
-    return os.path.join(SHARED_STORAGE_DIR, "models", model_name)
+    return os.path.join(get_juicefs_endpoint(), "models", model_name)
 
 def get_shared_cache_path(cache_name):
     """ 获取共享缓存的路径 """
-    return os.path.join(SHARED_STORAGE_DIR, "cache", cache_name)
+    return os.path.join(get_juicefs_endpoint(), "cache", cache_name)
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -85,7 +85,9 @@ def generate_reconstructions(pmrf_model, x, y, non_noisy_z0, num_flow_steps, dev
         v_t_next = pmrf_model(x_t=x_t_next, t=t_one * num_t, y=y).to(x_t_next.dtype)
         x_t_next = x_t_next.clone() + v_t_next * dt
     return x_t_next.clip(0, 1)
-
+facelib_path = get_shared_model_path("facexlib_models")
+if not os.path.exists(facelib_path):
+    raise FileNotFoundError(f"FaceXLib model not found at {facelib_path}")
 def resize(img, size, interpolation):
     # From https://github.com/sczhou/CodeFormer/blob/master/facelib/utils/face_restoration_helper.py
     h, w = img.shape[0:2]
@@ -172,7 +174,7 @@ def inference(
             save_ext="png",
             use_parse=True,
             device=device,
-            model_rootpath=get_shared_model_path("facexlib_models") ,
+            model_rootpath=facelib_path,
         )
 
         cropped_face, restored_faces, restored_img = enhance_face(
