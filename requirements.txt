@@ -1,20 +1,8 @@
-# 核心依赖
-torch>=2.1.0,<2.5.0
-torchvision==0.19.0
 realesrgan==0.2.5
-pytorch-lightning==2.4.0
+torchvision==0.19.0
+torch_fidelity==0.3.0
+torch_ema==0.3
+pytorch_lightning==2.4.0
 timm==1.0.7
-huggingface-hub>=0.19.0
-torch-fidelity==0.3.0
-torch-ema==0.3
-
-# 需手动应用补丁的库
-git+https://github.com/XPixelGroup/BasicSR.git
-
-# 平台特定依赖 (需根据环境选择)
-# Linux CUDA 11.8 + Torch 2.1:
-natten==0.17.1+torch210cu118 -f https://shi-labs.com/natten/wheels/
-# Linux CUDA 12.1 + Torch 2.3:
-natten==0.17.1+torch230cu121 -f https://shi-labs.com/natten/wheels/
-# Windows CUDA 12.4 + Python 3.10:
-https://huggingface.co/2kpr/NATTEN-Windows/resolve/main/natten-0.17.2.dev0-py310-none-win_amd64.whl
+basicsr>=0.3.0  # 确保安装支持 PMRF 修复版本
+natten==0.17.1+torch240cu124  # 使用与 Torch 和 CUDA 版本兼容的特定版本
