@@ -8,7 +8,9 @@ import torch._dynamo
 from torch import nn
 
 from . import flags
-from liblib import get_shared_cache_path  # @liblib adapter: 使用共享缓存路径
+from configs.config import get_juicefs_path
+from configs.node_fields import PUILD_EVA_CLIP_MAPPINGS
+from configs.node_fields import get_field_pre_values
 if flags.get_use_compile():
     torch._dynamo.config.suppress_errors = True
 

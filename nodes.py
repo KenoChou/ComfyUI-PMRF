@@ -14,7 +14,9 @@ import numpy as np
 from PIL import Image
 import os
 import folder_paths
-from liblib import get_shared_model_path  
+from configs.config import get_juicefs_path
+from configs.node_fields import PUILD_EVA_CLIP_MAPPINGS
+from configs.node_fields import get_field_pre_values
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

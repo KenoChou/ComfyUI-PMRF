@@ -6,7 +6,9 @@ from contextlib import contextmanager
 import math
 import threading
 import torch
-from liblib import get_shared_cache_path  # @liblib adapter
+from configs.config import get_juicefs_path
+from configs.node_fields import PUILD_EVA_CLIP_MAPPINGS
+from configs.node_fields import get_field_pre_values
 import os
 
 # @liblib adapter: FLOP 计数存储路径

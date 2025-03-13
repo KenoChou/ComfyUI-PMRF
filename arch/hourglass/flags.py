@@ -7,7 +7,9 @@ from functools import update_wrapper
 import os
 import threading
 import torch
-from liblib import get_shared_cache_path  # @liblib adapter
+from configs.config import get_juicefs_path
+from configs.node_fields import PUILD_EVA_CLIP_MAPPINGS
+from configs.node_fields import get_field_pre_values
 
 # @liblib adapter: 使用共享存储路径管理配置
 CONFIG_PATH = get_shared_cache_path("k_diffusion_config.pt")

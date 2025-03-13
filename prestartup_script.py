@@ -9,7 +9,10 @@ import os
 import pathlib
 from packaging.version import Version
 import time
-from liblib import get_shared_model_path  # 新增共享路径工具
+from configs.config import get_juicefs_path
+from configs.node_fields import PUILD_EVA_CLIP_MAPPINGS
+from configs.node_fields import get_field_pre_values
+  # 新增共享路径工具
 
 #pmrf_path = os.path.join(folder_paths.models_dir, "pmrf")
 #pmrf_model_path = os.path.join(pmrf_path, "model.safetensors")
