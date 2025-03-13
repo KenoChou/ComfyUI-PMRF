@@ -11,13 +11,20 @@ from configs.config import get_juicefs_path
 from configs.node_fields import PUILD_EVA_CLIP_MAPPINGS
 from configs.node_fields import get_field_pre_values
 
+
+def get_shared_cache_path(filename):
+    shared_drive_path = get_juicefs_path()  # 获取共享存储路径
+    return os.path.join(shared_drive_path, 'cache', filename)
 # @liblib adapter: 使用共享存储路径管理配置
 CONFIG_PATH = get_shared_cache_path("k_diffusion_config.pt")
 
 # @liblib adapter: 读取共享存储中的配置
+
 def load_config():
-    if os.path.exists(CONFIG_PATH):
-        return torch.load(CONFIG_PATH)
+    config_path = get_shared_cache_path("k_diffusion_config.pt")  # 获取配置文件路径
+    if os.path.exists(config_path):
+        return torch.load(config_path)
+    # 默认配置
     return {"use_compile": True, "use_flash_attention_2": True}
 
 config = load_config()

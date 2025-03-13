@@ -18,6 +18,17 @@ from configs.config import get_juicefs_path
 from configs.node_fields import PUILD_EVA_CLIP_MAPPINGS
 from configs.node_fields import get_field_pre_values
 
+
+
+def get_shared_model_path(model_name):
+    """ 获取共享模型的路径 """
+    return os.path.join(SHARED_STORAGE_DIR, "models", model_name)
+
+def get_shared_cache_path(cache_name):
+    """ 获取共享缓存的路径 """
+    return os.path.join(SHARED_STORAGE_DIR, "cache", cache_name)
+
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def set_realesrgan():

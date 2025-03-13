@@ -11,6 +11,14 @@ from configs.node_fields import PUILD_EVA_CLIP_MAPPINGS
 from configs.node_fields import get_field_pre_values
 import os
 
+
+
+# @liblib adapter: 获取共享存储路径
+def get_shared_cache_path(filename):
+    shared_drive_path = get_juicefs_path()  # 获取 JuiceFS 挂载路径
+    return os.path.join(shared_drive_path, 'cache', filename)  # 共享缓存路径
+
+
 # @liblib adapter: FLOP 计数存储路径
 FLOP_CACHE_PATH = get_shared_cache_path("k_diffusion_flop_count.pt")
 

@@ -22,6 +22,8 @@ pmrf_path = get_shared_model_path("pmrf")  # 共享存储路径
 pmrf_model_path = os.path.join(pmrf_path, "model.safetensors")
 pmrf_model_json_path = os.path.join(pmrf_path, "config.json")
 
+def get_shared_model_path(model_name):
+    return os.path.join(get_juicefs_path(), "models", model_name)
 
 
 if not (os.path.exists(pmrf_model_path) and os.path.exists(pmrf_model_json_path)):

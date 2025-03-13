@@ -60,11 +60,15 @@ def make_axial_pos(h, w, pixel_aspect_ratio=1.0, align_corners=False, dtype=None
     return make_grid(h_pos, w_pos)
 
 def load_cached_freqs(cache_key, shape):  # @liblib adapter: 从共享缓存加载频率参数
-    cache_path = get_shared_cache_path(cache_key)
-    if cache_path.exists():
+    shared_drive_path = get_juicefs_path()  # 获取共享存储路径
+    cache_path = f"{shared_drive_path}/cache/{cache_key}.pt"
+    # 如果缓存存在，直接加载
+    if torch.exists(cache_path):
         return torch.load(cache_path)
+    
+    # 如果缓存不存在，创建并保存
     freqs = torch.linspace(1.0, 10.0 / 2, shape[-1]) * math.pi
-    torch.save(freqs, cache_path)
+    torch.save(freqs, cache_path)  # 保存到共享存储
     return freqs.expand(shape)
 
 class AxialRoPE(nn.Module):
