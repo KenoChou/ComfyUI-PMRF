@@ -6,21 +6,28 @@ from contextlib import contextmanager
 from functools import update_wrapper
 import os
 import threading
-
 import torch
+from liblib import get_shared_cache_path  # @liblib adapter
 
+# @liblib adapter: 使用共享存储路径管理配置
+CONFIG_PATH = get_shared_cache_path("k_diffusion_config.pt")
+
+# @liblib adapter: 读取共享存储中的配置
+def load_config():
+    if os.path.exists(CONFIG_PATH):
+        return torch.load(CONFIG_PATH)
+    return {"use_compile": True, "use_flash_attention_2": True}
+
+config = load_config()
 
 def get_use_compile():
-    return os.environ.get("K_DIFFUSION_USE_COMPILE", "1") == "1"
-
+    return config.get("use_compile", True)
 
 def get_use_flash_attention_2():
-    return os.environ.get("K_DIFFUSION_USE_FLASH_2", "1") == "1"
-
+    return config.get("use_flash_attention_2", True)
 
 state = threading.local()
 state.checkpointing = False
-
 
 @contextmanager
 def checkpointing(enable=True):
@@ -30,10 +37,8 @@ def checkpointing(enable=True):
     finally:
         state.checkpointing = old_checkpointing
 
-
 def get_checkpointing():
     return getattr(state, "checkpointing", False)
-
 
 class compile_wrap:
     def __init__(self, function, *args, **kwargs):
@@ -51,6 +56,7 @@ class compile_wrap:
             try:
                 self._compiled_function = torch.compile(self.function, *self.args, **self.kwargs)
             except RuntimeError:
+                print("[WARN] torch.compile failed, using uncompiled function")  # @liblib adapter
                 self._compiled_function = self.function
         else:
             self._compiled_function = self.function
